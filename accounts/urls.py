@@ -4,12 +4,10 @@ from django.urls import path
 from accounts import views
 
 urlpatterns = [
-    path('user/create/', views.UserRegistrationView.as_view(), name='user-create'),
-    path('user/update/', views.UserUpdateView.as_view(), name='user-update'),
-    path('user/deactivate/<int:pk>/',
-         views.UserDeactivateView.as_view(), name='user-deactivate'),
-    path('user/profile/', views.UserProfileView.as_view(), name='user-profile'),
+    path('users/profile/<int:pk>/', views.UserProfile.as_view()),
+    path('users/create/', views.UserCreate.as_view()),
+    path('users/update/<int:pk>/', views.UserUpdate.as_view()),
+    path('users/deactivate/<int:pk>/', views.UserDeactivate.as_view()),
     
-    path('login/', views.UserLoginView.as_view(), name='user-login'),
-    path('register/', views.UserRegistrationView.as_view(), name='user-register'),
+    path('login/', views.UserLogin.as_view()),
 ]

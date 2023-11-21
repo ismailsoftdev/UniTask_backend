@@ -1,43 +1,49 @@
-# views.py in the accounts app
-
-from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework import status, generics, permissions
 from rest_framework.authtoken.models import Token
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
-from accounts.models import UserProfile
+from accounts.models import User
 from accounts import serializers
+from accounts.forms import UserForm
 
-
-class UserRegistrationView(generics.CreateAPIView):
+class UserProfile(generics.RetrieveAPIView):
     queryset = User.objects.all()
-    serializer_class = serializers.UserSerializer
+    serializer_class = serializers.UserSearializer
+    form_class = UserForm
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class UserCreate(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = serializers.UserRegisterSerializer
+    #form_class = UserForm
     permission_classes = [permissions.AllowAny]
+    
 
-class UserProfileView(generics.RetrieveAPIView):
-    queryset = User.objects.all() # Get the data for the logged in user
-    serializer_class = serializers.UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-class UserUpdateView(generics.RetrieveUpdateAPIView):
+class UserUpdate(generics.UpdateAPIView):
     queryset = User.objects.all()
-    serializer_class = serializers.UserSerializer
+    serializer_class = serializers.UserSearializer
+    form_class = UserForm
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_object(self):
+        return self.request.user
 
-class UserDeactivateView(generics.UpdateAPIView):
+class UserDeactivate(generics.UpdateAPIView):
     queryset = User.objects.all()
-    serializer_class = serializers.UserSerializer
+    serializer_class = serializers.UserSearializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
 
     def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.is_active = False
-        instance.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        user = self.get_object()
+        user.is_active = False
+        user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT, data={'message': 'User deactivated successfully.'})
 
-
-class UserLoginView(generics.CreateAPIView):
+class UserLogin(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = serializers.UserLoginSerializer
     permission_classes = [permissions.AllowAny]
@@ -45,15 +51,20 @@ class UserLoginView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = authenticate(
-            username= serializer.validated_data['username'],
-            password= serializer.validated_data['password'],
-        )
+        user = serializer.validated_data
         
-        if user:
-            login(request, user)
-            token, _ = Token.objects.get_or_create(user=user)
-            token_searializer = serializers.TokenSerializer(token)
-            return Response(token_searializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        username = user['email']
+        password = user['password']
+        user = authenticate(username=username, password=password)
+
+        if user is None:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        
+        # create token
+        token, created = Token.objects.get_or_create(user=user)
+        data = {
+            'token': token.key,
+            'user': serializers.UserSearializer(user).data
+        }
+        return Response(data, status=status.HTTP_200_OK)

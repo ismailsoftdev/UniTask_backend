@@ -31,21 +31,27 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 3rd Party
     'rest_framework',
+    "rest_framework.authtoken",
     'corsheaders',
     'cloudinary',
     # Local Apps
     'accounts',
+    'api',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+# cors headers
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 ROOT_URLCONF = 'UniTask_Backend.urls'
 
@@ -108,6 +114,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
+
+# custom user model
+AUTH_USER_MODEL = 'accounts.User'
+
 
 TIME_ZONE = 'UTC'
 
